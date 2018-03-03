@@ -301,6 +301,11 @@ obj-$(CONFIG_MACH_SONY_FLAMINGO) += board-flamingo-gpiomux.o
 obj-$(CONFIG_MACH_SONY_FLAMINGO) += clock-flamingo.o
 obj-$(CONFIG_MACH_SONY_FLAMINGO) += bms-batterydata-flamingo.o
 
+obj-$(CONFIG_MACH_SONY_SEAGULL) += board-seagull.o
+obj-$(CONFIG_MACH_SONY_SEAGULL) += board-seagull-gpiomux.o
+obj-$(CONFIG_MACH_SONY_SEAGULL) += clock-seagull.o
+obj-$(CONFIG_MACH_SONY_SEAGULL) += bms-batterydata-seagull.o
+
 # Disabled CAF batterydata, use device specific.
 #obj-$(CONFIG_QPNP_BMS) += bms-batterydata-oem.o
 
