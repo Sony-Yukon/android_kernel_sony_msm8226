@@ -987,6 +987,10 @@ void mdss_fb_update_backlight(struct msm_fb_data_type *mfd)
 			pdata->set_backlight(pdata, temp);
 			mfd->bl_level_scaled = mfd->unset_bl_level;
 			mfd->bl_updated = 1;
+			}
+		}
+		mutex_unlock(&mfd->bl_lock);
+	}
 #else
 	if (mfd->unset_bl_level) {
 		mutex_lock(&mfd->bl_lock);
@@ -1003,11 +1007,12 @@ void mdss_fb_update_backlight(struct msm_fb_data_type *mfd)
 				pdata->set_backlight(pdata, temp);
 				mfd->bl_level_scaled = mfd->unset_bl_level;
 				mfd->bl_updated = 1;
-#endif
 			}
 		}
 		mutex_unlock(&mfd->bl_lock);
 	}
+#endif
+}
 
 static int mdss_fb_blank_sub(int blank_mode, struct fb_info *info,
 			     int op_enable)
@@ -1212,8 +1217,8 @@ int mdss_fb_alloc_fb_ion_memory(struct msm_fb_data_type *mfd, size_t fb_size)
 		goto fb_mmap_failed;
 	}
 
-	pr_info("alloc 0x%xB vaddr = %pK (%pa iova) for fb%d\n", fb_size, vaddr,
-			&mfd->iova, mfd->index);
+	pr_debug("alloc 0x%zuB vaddr = %p (%pa iova) for fb%d\n", fb_size,
+			vaddr, &mfd->iova, mfd->index);
 
 	mfd->fbi->screen_base = (char *) vaddr;
 	mfd->fbi->fix.smem_start = (unsigned int) mfd->iova;
@@ -1305,7 +1310,7 @@ static int mdss_fb_fbmem_ion_mmap(struct fb_info *info,
 				vma->vm_page_prot =
 					pgprot_writecombine(vma->vm_page_prot);
 
-			pr_debug("vma=%pK, addr=%x len=%ld",
+			pr_debug("vma=%p, addr=%x len=%ld",
 					vma, (unsigned int)addr, len);
 			pr_cont("vm_start=%x vm_end=%x vm_page_prot=%ld\n",
 					(unsigned int)vma->vm_start,
@@ -1464,6 +1469,7 @@ static int mdss_fb_alloc_fbmem_iommu(struct msm_fb_data_type *mfd, int dom)
 #else
 	pr_debug("%s frame buffer reserve_size=0x%zx\n", __func__, size);
 #endif
+
 	if (size < PAGE_ALIGN(mfd->fbi->fix.line_length *
 			      mfd->fbi->var.yres_virtual))
 		pr_warn("reserve size is smaller than framebuffer size\n");
@@ -1774,8 +1780,7 @@ static int mdss_fb_open(struct fb_info *info, int user)
 		pinfo->pid = pid;
 		pinfo->ref_cnt = 0;
 		list_add(&pinfo->list, &mfd->proc_list);
-		pr_debug("new process entry pid=%d file=%pK\n",
-			 pinfo->pid);
+		pr_debug("new process entry pid=%d\n", pinfo->pid);
 	}
 
 	result = pm_runtime_get_sync(info->dev);
@@ -1824,6 +1829,7 @@ thread_error:
 pm_error:
 	return result;
 }
+
 #ifdef CONFIG_MACH_SONY_EAGLE
 static int mdss_fb_release_all(struct fb_info *info, bool release_all, int user)
 #else
