@@ -1021,8 +1021,8 @@ void mdss_fb_update_backlight(struct msm_fb_data_type *mfd)
 		}
 		mutex_unlock(&mfd->bl_lock);
 	}
-#endif
 }
+#endif
 
 static int mdss_fb_blank_sub(int blank_mode, struct fb_info *info,
 			     int op_enable)
