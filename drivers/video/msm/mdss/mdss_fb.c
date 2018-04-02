@@ -229,6 +229,10 @@ static int mdss_fb_notify_update(struct msm_fb_data_type *mfd,
 
 static int lcd_backlight_registered;
 
+#ifdef CONFIG_MACH_SONY_SEAGULL
+#define MAX_BACKLIGHT_BRIGHTNESS 255
+#endif
+
 static void mdss_fb_set_bl_brightness(struct led_classdev *led_cdev,
 				      enum led_brightness value)
 {
@@ -601,6 +605,12 @@ static int mdss_fb_probe(struct platform_device *pdev)
 
 	mfd->ext_ad_ctrl = -1;
 	mfd->bl_level = 0;
+#ifdef CONFIG_MACH_SONY_SEAGULL
+	if (mfd->index == 0) {
+		mfd->bl_level = pdata->panel_info.bl_max;
+		mfd->unset_bl_level = mfd->bl_level;
+	}
+#endif
 	mfd->bl_level_prev_scaled = 0;
 	mfd->bl_scale = 1024;
 	mfd->bl_min_lvl = 30;

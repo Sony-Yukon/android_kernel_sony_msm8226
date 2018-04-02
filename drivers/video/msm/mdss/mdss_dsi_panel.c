@@ -159,9 +159,21 @@ static struct dsi_cmd_desc backlight_cmd = {
 extern int g_mdss_dsi_lcd_id;
 #endif
 
+#ifdef CONFIG_MACH_SONY_SEAGULL
+static int last_bl_level = 0;
+#endif
+
 static void mdss_dsi_panel_bklt_dcs(struct mdss_dsi_ctrl_pdata *ctrl, int level)
 {
 	struct dcs_cmd_req cmdreq;
+
+#ifdef CONFIG_MACH_SONY_SEAGULL
+	if (!level || !last_bl_level) {
+		printk(KERN_ERR "[DISPLAY]%s: %d to %d\n",
+				__func__, last_bl_level, level);
+	}
+	last_bl_level = level;
+#endif
 
 #ifdef CONFIG_MACH_SONY_EAGLE
   int new_level;
