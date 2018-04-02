@@ -1,0 +1,30 @@
+#
+# Sensor driver configuration
+#
+menuconfig INPUT_SENSORS
+	bool "Sensors"
+	default y
+	help
+	  Say Y here, and a list of supported input sensors will be displayed.
+	  This option doesn't affect the kernel.
+
+	  If unsure, say Y.
+
+config SENSORS_BMA2X2
+	tristate "BMA255/BMA250E/BMA222E/BMA280 acceleration sensor support"
+	depends on I2C
+	help
+	  If you say yes here you get support for Bosch Sensortec's
+	  acceleration sensors BMA255/BMA250E/BMA222E/BMA280.
+
+config SENSORS_BMM050
+	tristate "BMM050 Magnetic Sensor Driver"
+	depends on I2C
+	help
+	 BMM050 Magnetic Sensor Driver implemented by Bosch-Sensortec.
+
+config SENSORS_BMG160
+	bool "Bosch BMG160 gyroscope support"
+	depends on I2C
+	help
+	  Enable Bosch BMG160 gyroscope support.
