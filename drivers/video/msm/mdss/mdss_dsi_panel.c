@@ -34,6 +34,101 @@
 
 DEFINE_LED_TRIGGER(bl_led_trigger);
 
+#ifdef CONFIG_MACH_SONY_SEAGULL
+#define JDI_NON_PANEL_ID  0x00
+#define JDI_PANEL_ID      0x61
+#define TRULY_PANEL_ID    0x63
+#define TRULY_OTP_PANEL_ID    0x64
+#define INNOLUX_PANEL_ID    0x65
+#define INNOLUX_OTP_PANEL_ID    0x66
+
+#ifdef CONFIG_FIH_HR_MSLEEP
+#define MDSS_MSLEEP hr_msleep
+#else
+#define MDSS_MSLEEP msleep
+#endif
+static int mdss_dsi_parse_dcs_cmds(struct device_node *np,
+		struct dsi_panel_cmds *pcmds, char *cmd_key, char *link_key);
+/* MM-VH-FTM02* */
+struct device_node *gMIPIDSInode;
+
+static bool PanelState = 0x0;
+static unsigned char gFirstChange = 0;
+static unsigned char gPanelModel = 0;
+static char manufacture_idDA[2] = {0xDA, 0x00};
+static struct dsi_cmd_desc manufacture_id_cmd = {
+	.dchdr = {
+		DTYPE_DCS_READ, 1, 0, 1, 20, sizeof(manufacture_idDA),
+	},
+	.payload = manufacture_idDA,
+};
+
+bool mdss_display_power_state(void)
+{
+	return PanelState;
+}
+EXPORT_SYMBOL(mdss_display_power_state);
+
+unsigned char mdss_manufacture_id_read(void)
+{
+	return gPanelModel;
+}
+
+static void mdss_manufacture_cb(int data)
+{
+	gPanelModel = data;
+	printk("[DISPLAY]%s: pid 0x%x\n", __func__, gPanelModel);
+}
+
+static unsigned char mdss_manufacture_id(struct mdss_dsi_ctrl_pdata *ctrl)
+{
+	struct dcs_cmd_req cmdreq;
+
+	memset(&cmdreq, 0, sizeof(cmdreq));
+	cmdreq.cmds = &manufacture_id_cmd;
+	cmdreq.cmds_cnt = 1;
+	cmdreq.flags = CMD_REQ_RX | CMD_REQ_COMMIT;
+	cmdreq.rlen = 1;
+	cmdreq.cb = mdss_manufacture_cb;
+	mdss_dsi_cmdlist_put(ctrl, &cmdreq);
+
+	return gPanelModel;
+}
+/* MM-VH-FTM02*[ */
+static int mdss_change_dcs_cmd(struct device_node *npIn,
+		struct mdss_dsi_ctrl_pdata *ctrl, const char* name, const int id)
+{
+	struct device_node *all_nodes = NULL;
+	struct device_node *np = npIn;
+	char* panel_name = np->properties->value;
+	char cmd_name[30] = {0};
+	int cmd_name_size = sizeof(cmd_name)/sizeof(cmd_name[0]);
+
+	printk("[DISPLAY]%s: %s, id 0x%x\n", __func__, panel_name, id);
+
+	if (strncmp(panel_name, name, strnlen(name, 128)) || !gFirstChange) {
+		all_nodes = of_find_all_nodes(NULL);
+		np = of_find_compatible_node(all_nodes, NULL, name);
+		npIn = np;
+
+		snprintf(cmd_name, cmd_name_size, "qcom,mdss-dsi-on-command-%x", id);
+		mdss_dsi_parse_dcs_cmds(np, &ctrl->on_cmds,
+			cmd_name, "qcom,mdss-dsi-on-command-state");
+
+		mdss_dsi_parse_dcs_cmds(np, &ctrl->off_cmds,
+			"qcom,mdss-dsi-off-command", "qcom,mdss-dsi-off-command-state");
+
+		gFirstChange = 1;
+		panel_name = np->properties->value;
+
+		printk("[DISPLAY]%s: change to %s\n", __func__, panel_name);
+	}
+
+    return 0;
+}
+/* MM-VH-FTM02*] */
+#endif
+
 void mdss_dsi_panel_pwm_cfg(struct mdss_dsi_ctrl_pdata *ctrl)
 {
 	ctrl->pwm_bl = pwm_request(ctrl->pwm_lpg_chan, "lcd-bklt");

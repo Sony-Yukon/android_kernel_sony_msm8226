@@ -74,7 +74,9 @@ static int mdss_dsi_panel_power_on(struct mdss_panel_data *pdata, int enable)
 				__func__, ret);
 			goto error;
 		}
-
+#ifdef CONFIG_MACH_SONY_SEAGULL
+	mdss_dsi_panel_reset(pdata, 0);
+#endif
 		if (!pdata->panel_info.mipi.lp11_init) {
 			ret = mdss_dsi_panel_reset(pdata, 1);
 			if (ret) {
